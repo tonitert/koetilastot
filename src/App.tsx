@@ -23,13 +23,13 @@ export default class App extends React.Component {
       name: "Kauppis",
       element: <Kauppis/>,
       icon: "",
-      color: "#b698d9"
+      color: "#5b967a"
     },
     {
       name: "Lääkis",
       element: <Laakis/>,
       icon: "",
-      color: "#b698d9"
+      color: "#e14444"
     },
     {
       name: "DI",
