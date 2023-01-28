@@ -1,16 +1,16 @@
 import React from 'react';
 import {GraphType} from "../../../graphs/GraphType";
 import {Graph} from "../../../graphs/Graph";
-import YOCSVParser from "../../data/YOCSVParser";
 import GraphBox from "../../containers/GraphBox";
+import YODataParser, {YODate, YOSeason} from "./YODataParser";
 
 export default class YO extends React.Component {
 
-  yoDataParser: YOCSVParser
+  yoDataParser: YODataParser
 
   constructor(props) {
     super(props);
-    //this.yoDataParser = new YODataParser(new YODate(2015, YOSeason.Spring));
+    this.yoDataParser = new YODataParser();
   }
 
   render() {
