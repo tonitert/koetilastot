@@ -4,8 +4,8 @@ export enum Sex {
 }
 
 export enum YOSeason {
-    Spring = "K",
-    Autumn = "S"
+    Spring = "Spring",
+    Autumn = "Autumn"
 }
 
 export interface YOCandidate {
@@ -29,16 +29,21 @@ export class YODate {
     public toJsonString() {
         return `${this.season.toString()}_${this.year}.json`
     }
+
+    public toString() {
+        return `${this.season}, ${this.year}`
+    }
 }
 
 export interface YOSeasonData {
     candidates: YOCandidate[]
+    count: number
 }
 
 export default class YODataParser {
 
-    private readonly YTL_DATA_URL = "/data/ytl/per-student"
-    private readonly SUBJECTS = {
+    private static readonly YTL_DATA_URL = "/data/ytl/per-student"
+    private static readonly SUBJECTS = {
         "A":"a",
         "O":"a",
         "Z":"a",
@@ -84,16 +89,29 @@ export default class YODataParser {
         "L7":"a"
     }
 
-    yoSeasons: Map<YODate, YOSeason>
+    yoSeasons: Map<YODate, YOSeasonData> = new Map<YODate, YOSeasonData>()
 
-    private async loadData() {
-        let yoDates: YODate[] = (await (await fetch(this.YTL_DATA_URL + "/downloadedDates.json")).json()).map((val) => new YODate(val.year, val.season))
+    static async loadData(): Promise<YODataParser> {
+        let yoSeasons: Map<YODate, YOSeasonData> = new Map<YODate, YOSeasonData>()
+        let yoDates: YODate[] = (await (await fetch(this.YTL_DATA_URL + "/downloadedDates.json")).json())
+            .map((val) => new YODate(val.year, val.season))
         for(let yoDate of yoDates) {
-            this.yoSeasons.set(yoDate, await (await fetch(`${this.YTL_DATA_URL}/${yoDate.toJsonString()}`)).json());
+            try {
+                yoSeasons.set(yoDate, await (await fetch(`${this.YTL_DATA_URL}/${yoDate.toJsonString()}`)).json());
+            }
+            catch (e) {
+                console.log(e)
+            }
         }
+        yoSeasons = new Map([...yoSeasons.entries()].sort((a,b) => {
+            let seasonToNum = (d: YODate) => d.season === YOSeason.Autumn ? 1 : 0
+            return (a[0].year * 2 + seasonToNum(a[0])) - (b[0].year * 2 + seasonToNum(b[0]))
+        }));
+        return new YODataParser(yoSeasons);
     }
 
-    constructor() {
-        this.loadData()
+    private constructor(yoSeasons: Map<YODate, YOSeasonData>) {
+        this.yoSeasons = yoSeasons
     }
+
 }

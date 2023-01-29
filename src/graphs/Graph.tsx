@@ -10,9 +10,8 @@ export class Graph extends React.Component {
     private maxVal: number = Number.MIN_VALUE;
     private minVal: number = Number.MAX_VALUE;
 
-    
-    constructor(props: GraphProps) {
-        super(props);
+    componentDidUpdate(prevProps: Readonly<{}>, prevState: Readonly<{}>, snapshot?: any) {
+        console.log("ads")
     }
 
     render() {
