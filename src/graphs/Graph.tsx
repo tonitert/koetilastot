@@ -7,15 +7,13 @@ import GraphLine from "./GraphLine";
 export class Graph extends React.Component {
     props: GraphProps
 
-    private maxVal: number = Number.MIN_VALUE;
-    private minVal: number = Number.MAX_VALUE;
-
-    componentDidUpdate(prevProps: Readonly<{}>, prevState: Readonly<{}>, snapshot?: any) {
-        console.log("ads")
-    }
+    private maxVal: number
+    private minVal: number
 
     render() {
         let lines: ReactNode[] = [];
+        this.maxVal = Number.MIN_VALUE;
+        this.minVal = Number.MAX_VALUE;
         for (let line of this.props.lines) {
             for (let point of line.points) {
                 this.maxVal = Math.max(point.y, this.maxVal)

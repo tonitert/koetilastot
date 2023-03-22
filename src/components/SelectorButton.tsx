@@ -9,7 +9,6 @@ export interface SelectorButtonProps {
 }
 
 export default class SelectorButton extends React.Component {
-
     props: SelectorButtonProps
 
     /* <img src={this.props.icon} alt={}/> */

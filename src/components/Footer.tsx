@@ -7,7 +7,6 @@ export interface FooterProps extends ReactProps {
 }
 
 export default class Footer extends React.Component {
-
     props: FooterProps
 
     render() {

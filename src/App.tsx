@@ -7,15 +7,20 @@ import Laakis from "./components/views/Laakis";
 import ViewSwitcher, {ViewData} from "./components/ViewSwitcher";
 import React from "react";
 import PageSection from "./components/PageSection";
+import YODataParser from "./components/data/YODataParser";
 
 export default class App extends React.Component {
 
   private DEFAULT_VIEW = "YO";
 
+  private DATA_PARSERS = {
+    "YO": YODataParser.loadData()
+  }
+
   private views: ViewData[] = [
     {
       name: "YO",
-      element: <YO/>,
+      element: <YO yoDataParser={this.DATA_PARSERS["YO"]}/>,
       icon: "",
       color: "#b698d9"
     },

@@ -2,10 +2,14 @@ import React from 'react';
 import {GraphType} from "../../../graphs/GraphType";
 import {Graph} from "../../../graphs/Graph";
 import GraphBox from "../../containers/GraphBox";
-import YODataParser, {YODate, YOSeason} from "./YODataParser";
+import YODataParser, {YOSeason} from "../../data/YODataParser";
 import GraphPoint from "../../../graphs/GraphPoint";
 
 export default class YO extends React.Component {
+
+    props: {
+        yoDataParser: Promise<YODataParser>
+    }
 
     state: {
         yoDataParser: YODataParser
@@ -13,8 +17,10 @@ export default class YO extends React.Component {
         yoDataParser: null
     }
 
-    componentDidMount() {
-        YODataParser.loadData().then((parser) => {
+    constructor(props) {
+        super(props)
+        this.props = props
+        this.props.yoDataParser.then((parser) => {
             this.setState({
                 yoDataParser: parser
             })
@@ -25,29 +31,25 @@ export default class YO extends React.Component {
         let graduatesPerYear: GraphPoint[] = []
         let graduatesSpring: GraphPoint[] = []
         let graduatesAutumn: GraphPoint[] = []
-        let autumnGraph;
         if (this.state.yoDataParser !== null) {
+            let lastVal = 0;
             for (let entry of this.state.yoDataParser.yoSeasons.entries()) {
                 let point: GraphPoint = new GraphPoint(entry[1].count, entry[0].year, entry[0].toString())
-                graduatesPerYear.push(point)
+
                 switch (entry[0].season) {
                     case YOSeason.Spring:
                         graduatesSpring.push(point)
+                        lastVal = entry[1].count
                         break
                     case YOSeason.Autumn:
                         graduatesAutumn.push(point)
+                        graduatesPerYear.push(
+                            new GraphPoint(entry[1].count + lastVal, entry[0].year, entry[0].year.toString())
+                        )
                         break
                 }
             }
         }
-        autumnGraph = <Graph lines={[
-            {
-                points: graduatesAutumn,
-                type: GraphType.Fill,
-                lineWidth: 3
-            }
-        ]
-        }/>
         return (
             <div>
                 <h2 style={{color: "black"}}>Yleiset tilastot</h2>
@@ -55,7 +57,14 @@ export default class YO extends React.Component {
                     <GraphBox titleText={"Valmistuneiden määrä"} views={[
                         {
                             name: "Syksy",
-                            element: autumnGraph
+                            element: <Graph lines={[
+                                {
+                                    points: graduatesAutumn,
+                                    type: GraphType.Fill,
+                                    lineWidth: 3
+                                }
+                            ]
+                            }/>
 
                         },
                         {

@@ -23,19 +23,32 @@ export interface ViewSwitcherProps extends ReactProps {
 export default class ViewSwitcher extends React.Component {
     props: ViewSwitcherProps
 
+    state: {
+        currentView: string
+    }
+
+    constructor(props) {
+        super(props);
+        this.state = {
+            currentView: props.currentView
+        }
+    }
+
+    private getView = (viewName: string) => this.props.views.find(view => view.name === viewName)
+
     render() {
         return (
-            <div className={"view-switcher"} style={this.props.style}>
+            <div className={"view-switcher"} style={this.props.style !== undefined ? this.props.style : null}>
                 <Selector targets={this.props.views} currentTarget={this.props.currentView} onStateChange={newState => {
                     if (this.props.onViewSwitch) {
-                        this.props.onViewSwitch(this.props.views[newState]);
+                        this.props.onViewSwitch(this.getView(newState));
                     }
                     this.setState({
                         currentView: newState
                     })
                 }}/>
                 {
-                    this.props.views[this.props.currentView].element
+                    this.getView(this.state.currentView).element
                 }
             </div>
         );
