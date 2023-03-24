@@ -77,6 +77,14 @@
     top: 30px;
 }
 
+.line-segment-date-text.line-segment-date-text-below.end {
+    transform: rotateZ(0deg);
+}
+
+.line-segment-date-text.line-segment-date-text-below.end > p {
+    transform: rotateZ(0deg) translateX(-100%);
+}
+
 .line-segment-date-text.end {
     transform: translateX(-50%) rotateZ(-45deg) ;
 }
