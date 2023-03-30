@@ -100,7 +100,8 @@ export default class YODataParser {
                 yoSeasons.set(yoDate, await (await fetch(`${this.YTL_DATA_URL}/${yoDate.toJsonString()}`)).json());
             }
             catch (e) {
-                console.log(e)
+                console.warn("Exception while fetching:")
+                console.warn(e)
             }
         }
         yoSeasons = new Map([...yoSeasons.entries()].sort((a,b) => {

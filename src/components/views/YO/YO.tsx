@@ -1,9 +1,11 @@
 import React from 'react';
-import {GraphType} from "../../../graphs/GraphType";
-import {Graph} from "../../../graphs/Graph";
 import GraphBox from "../../containers/GraphBox";
 import YODataParser, {YOSeason} from "../../data/YODataParser";
-import GraphPoint from "../../../graphs/GraphPoint";
+import {GraduationAmountDataPoint} from "./graphs/GraduationAmountDataPoint";
+import StandardAreaChart from "./graphs/StandardAreaChart";
+import {DataArray} from "./graphs/DataArray";
+import Selector from "../../Selector";
+import {FilterState} from "./filters/FilterState";
 
 export default class YO extends React.Component {
 
@@ -13,29 +15,48 @@ export default class YO extends React.Component {
 
     state: {
         yoDataParser: YODataParser
+        filterState: FilterState
     } = {
-        yoDataParser: null
+        yoDataParser: null,
+        filterState: {
+            season: "all"
+        }
     }
+
+    mounted: boolean = false;
+
+    componentDidMount() {
+        this.mounted = true;
+    }
+
+    componentWillUnmount() {
+        this.mounted = false;
+    }
+
+
 
     constructor(props) {
         super(props)
         this.props = props
         this.props.yoDataParser.then((parser) => {
-            this.setState({
-                yoDataParser: parser
-            })
+            if(this.mounted){
+                this.setState({
+                    yoDataParser: parser
+                })
+            } else {
+                this.state.yoDataParser = parser
+            }
         })
     }
 
     render() {
-        let graduatesPerYear: GraphPoint[] = []
-        let graduatesSpring: GraphPoint[] = []
-        let graduatesAutumn: GraphPoint[] = []
+        let graduatesPerYear: GraduationAmountDataPoint[] = []
+        let graduatesSpring: GraduationAmountDataPoint[] = []
+        let graduatesAutumn: GraduationAmountDataPoint[] = []
         if (this.state.yoDataParser !== null) {
             let lastVal = 0;
             for (let entry of this.state.yoDataParser.yoSeasons.entries()) {
-                let point: GraphPoint = new GraphPoint(entry[1].count, entry[0].year, entry[0].toString())
-
+                let point: GraduationAmountDataPoint = new GraduationAmountDataPoint(entry[1].count, entry[0])
                 switch (entry[0].season) {
                     case YOSeason.Spring:
                         graduatesSpring.push(point)
@@ -44,67 +65,50 @@ export default class YO extends React.Component {
                     case YOSeason.Autumn:
                         graduatesAutumn.push(point)
                         graduatesPerYear.push(
-                            new GraphPoint(entry[1].count + lastVal, entry[0].year, entry[0].year.toString())
+                            new GraduationAmountDataPoint(entry[1].count + lastVal, entry[0].year)
                         )
                         break
                 }
             }
         }
+
+        let filterToData = {
+            "all": graduatesPerYear,
+            "spring": graduatesSpring,
+            "autumn": graduatesAutumn
+        }
+        let graduated: GraduationAmountDataPoint[] = filterToData[this.state.filterState.season];
         return (
             <div>
                 <h2 style={{color: "black"}}>Yleiset tilastot</h2>
+                <div className={"card filter-card"}>
+                    <h3>Suodata tietoja</h3>
+                    <div className={"sort-options"}>
+                        <div>
+                            <p>Tutkinnon suoritusajan perusteella:</p>
+                            <Selector targets={[{name: "Koko vuosi", id: "all"}, {name: "Syksy", id: "autumn"}, {name: "Kevät", id: "spring"}]} currentTarget={"all"} onStateChange={(seasonId) => {
+                                this.setState({
+                                    filterState: {
+                                        season: seasonId
+                                    }
+                                })
+                            }}/>
+                        </div>
+                    </div>
+
+                </div>
                 <div className="stat-container">
                     <GraphBox titleText={"Valmistuneiden määrä"} views={[
                         {
-                            name: "Syksy",
-                            element: <Graph lines={[
-                                {
-                                    points: graduatesAutumn,
-                                    type: GraphType.Fill,
-                                    lineWidth: 3
-                                }
-                            ]
-                            }/>
+                            name: "Kaikki",
+                            element: this.state.yoDataParser === null ? null : <StandardAreaChart dataArray={new DataArray(graduated, "Valmistuneita")}/>
 
-                        },
-                        {
-                            name: "Kevät", element: <Graph lines={[
-                                {
-                                    points: graduatesSpring,
-                                    type: GraphType.Fill,
-                                    lineWidth: 3
-                                }
-                            ]
-                            }/>
-                        },
-                        {
-                            name: "Kaikki",
-                            element: <Graph lines={[
-                                {
-                                    points: graduatesPerYear,
-                                    type: GraphType.Fill,
-                                    lineWidth: 3
-                                }
-                            ]
-                            }/>
                         }
                     ]} currentView={"Syksy"}/>
                     <GraphBox titleText={"Ilmoittautumiset YO-kokeisiin"} views={[
                         {
                             name: "Syksy",
-                            element: <Graph lines={[
-                                {
-                                    points: [
-                                        {timestamp: 0, y: 1, dateText: "2019"},
-                                        {timestamp: 4, y: 3, dateText: "2019"},
-                                        {timestamp: 10, y: 1, dateText: "2019"},
-                                        {timestamp: 25, y: 14, dateText: "2019"}
-                                    ],
-                                    type: GraphType.Fill,
-                                    lineWidth: 3
-                                }
-                            ]
-                            }/>
+                            element: null
                         },
                         {
                             name: "Kevät",
@@ -118,19 +122,7 @@ export default class YO extends React.Component {
                     <GraphBox titleText={"Ilmoittautumiset YO-kokeisiin"} views={[
                         {
                             name: "Syksy",
-                            element: <Graph lines={[
-                                {
-                                    points: [
-                                        {timestamp: 0, y: 1, dateText: "2019"},
-                                        {timestamp: 4, y: 3, dateText: "2019"},
-                                        {timestamp: 10, y: 1, dateText: "2019"},
-                                        {timestamp: 25, y: 14, dateText: "2019"}
-                                    ],
-                                    type: GraphType.Fill,
-                                    lineWidth: 3
-                                }
-                            ]
-                            }/>
+                            element: null
                         },
                         {
                             name: "Kevät",
@@ -144,19 +136,7 @@ export default class YO extends React.Component {
                     <GraphBox titleText={"Ilmoittautumiset YO-kokeisiin"} views={[
                         {
                             name: "Syksy",
-                            element: <Graph lines={[
-                                {
-                                    points: [
-                                        {timestamp: 0, y: 1, dateText: "2019"},
-                                        {timestamp: 4, y: 3, dateText: "2019"},
-                                        {timestamp: 10, y: 1, dateText: "2019"},
-                                        {timestamp: 25, y: 14, dateText: "2019"}
-                                    ],
-                                    type: GraphType.Fill,
-                                    lineWidth: 3
-                                }
-                            ]
-                            }/>
+                            element: null
                         },
                         {
                             name: "Kevät",
@@ -170,19 +150,7 @@ export default class YO extends React.Component {
                     <GraphBox titleText={"Ilmoittautumiset YO-kokeisiin"} views={[
                         {
                             name: "Syksy",
-                            element: <Graph lines={[
-                                {
-                                    points: [
-                                        {timestamp: 0, y: 1, dateText: "2019"},
-                                        {timestamp: 4, y: 3, dateText: "2019"},
-                                        {timestamp: 10, y: 1, dateText: "2019"},
-                                        {timestamp: 25, y: 14, dateText: "2019"}
-                                    ],
-                                    type: GraphType.Fill,
-                                    lineWidth: 3
-                                }
-                            ]
-                            }/>
+                            element: null
                         },
                         {
                             name: "Kevät",

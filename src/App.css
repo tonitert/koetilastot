@@ -53,12 +53,9 @@
   align-items: flex-start;
 }
 
-.graph-box {
-  height: 300px;
+.card {
   display: flex;
   flex-direction: column;
-  width: 500px;
-  max-width: 90vw;
   box-shadow: grey 4px 4px 4px 4px;
   margin: 10px;
   background-color: white;
@@ -67,7 +64,22 @@
   transition: all ease-in-out 0.15s;
 }
 
-.graph-box > .view-switcher {
+.graph-card {
+  width: 500px;
+  flex-grow: 1;
+  aspect-ratio: 2;
+  min-height: 300px;
+  max-height: 50vh;
+}
+
+.filter-card {
+  min-height: 100px;
+  padding-left: 20px;
+  padding-right: 20px;
+  padding-bottom: 20px;
+}
+
+.card > .view-switcher {
   flex-grow: 1;
 }
 
@@ -81,7 +93,7 @@
   margin-right: 30px;
 }
 
-.graph-box > .view-switcher > .view-switch-buttons {
+.card > .view-switcher > .view-switch-buttons {
   margin: 10px;
 }
 
@@ -92,7 +104,7 @@
 
 .page-section {
   position: relative;
-  padding: 30px 30px 50px;
+  padding: 30px 5vw 50px;
   transition: background-color 1s;
 }
 
@@ -130,6 +142,11 @@
 
 a {
   color: white;
+}
+
+.sort-options {
+  display: flex;
+  flex-wrap: wrap;
 }
 
 @media only screen and (min-width: 600px) {
