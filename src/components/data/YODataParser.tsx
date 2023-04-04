@@ -13,9 +13,7 @@ export enum YOSeason {
 export interface YOCandidate {
     sex: Sex,
     points: number
-    subjects: {
-        [key: string]: number
-    },
+    subjectPoints: Record<string, number>,
     schoolNumber: number
 }
 

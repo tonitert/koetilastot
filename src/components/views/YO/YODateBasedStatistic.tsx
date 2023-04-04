@@ -1,4 +1,5 @@
 import {DateBasedDataPoint} from "./graphs/DateBasedDataPoint";
+import {StackOffsetType} from "recharts/types/util/types";
 
 export default interface YODateBasedStatistic {
     dataPoints: DateBasedDataPoint[]
@@ -12,4 +13,5 @@ export default interface YODateBasedStatistic {
      */
     display?: () => boolean
     stacked?: boolean
+    stackOffset?: StackOffsetType
 }

@@ -86,7 +86,7 @@ export default class YO extends React.Component {
                         let male = seasonData.candidates.filter((candidate) => candidate.sex === Sex.Male).length;
                         let female = seasonData.candidates.length - male;
                         return [seasonData, [male, female]];
-                    }).map((tuple => new DateBasedDataPoint([tuple[1][0], tuple[1][1]], tuple[0].date))),
+                    }).map((tuple => new DateBasedDataPoint([...tuple[1]], tuple[0].date))),
                     stacked: true,
                     defs:
                         <defs>
@@ -98,7 +98,38 @@ export default class YO extends React.Component {
                                 <stop offset="5%" stopColor="#022CFF" stopOpacity={0.5}/>
                                 <stop offset="95%" stopColor="#022CFF" stopOpacity={0.1}/>
                             </linearGradient>
-                        </defs>
+                        </defs>,
+                    stackOffset: "expand"
+                },
+                {
+                    name: "Arvosanajakauma",
+                    yAxisNames: ["I","A","B","C","M","E","L"],
+                    colors: [
+                        "rgba(0,255,42,0.5)",
+                        "rgba(0,255,157,0.5)",
+                        "rgba(0,247,255,0.5)",
+                        "rgba(0,157,255,0.5)",
+                        "rgba(0,89,255,0.5)",
+                        "rgba(17,0,255,0.5)",
+                        "rgba(153,0,255,0.5)"
+                    ],
+                    stacked: true,
+                    stackOffset: "expand",
+                    dataPoints: this.state.yoSeasonData.map((seasonData):
+                    [YOSeasonData, [number, number, number, number, number, number, number]] => {
+                        let getAmount = (num: number): number => seasonData.candidates.reduce((p, c) =>
+                            p + Object.values(c.subjectPoints).reduce((p: number, grade: number) => grade === num ? ++p : p), 0);
+                        return [seasonData,
+                            [
+                                getAmount(0),
+                                getAmount(2),
+                                getAmount(3),
+                                getAmount(4),
+                                getAmount(5),
+                                getAmount(6),
+                                getAmount(7)
+                            ]]
+                    }).map((tuple => new DateBasedDataPoint([...tuple[1]], tuple[0].date)))
                 }
             ]
         }
@@ -115,7 +146,7 @@ export default class YO extends React.Component {
                             return <GraphBox titleText={stat.name} views={[
                                 {
                                     name: "",
-                                    element: this.state.yoSeasonData === null ? null : <StandardAreaChart dataArray={new DataArray(stat.dataPoints, stat.yAxisNames)} colors={stat.colors} unit={stat.unit} defs={stat.defs} stacked={stat.stacked}/>
+                                    element: this.state.yoSeasonData === null ? null : <StandardAreaChart dataArray={new DataArray(stat.dataPoints, stat.yAxisNames)} colors={stat.colors} unit={stat.unit} defs={stat.defs} stacked={stat.stacked} stackOffset={stat.stackOffset}/>
 
                                 }
                             ]} currentView={""}/>

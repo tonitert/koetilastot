@@ -13,6 +13,7 @@ import {
 } from "recharts";
 import {DataArray} from "./DataArray";
 import {DefaultTooltipContent} from "recharts/lib/component/DefaultTooltipContent";
+import {StackOffsetType} from "recharts/types/util/types";
 
 export default class StandardAreaChart extends React.Component {
 
@@ -22,6 +23,7 @@ export default class StandardAreaChart extends React.Component {
         colors?: string[]
         stacked?: boolean
         defs?: JSX.IntrinsicElements["defs"]
+        stackOffset?: StackOffsetType
     }
 
     render() {
@@ -65,7 +67,7 @@ export default class StandardAreaChart extends React.Component {
 
         return <div className={"graph-responsive-container"}>
             <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={data} margin={{ top: 0, right: 0, left: 0, bottom: 0 }} stackOffset={"expand"}>
+                <AreaChart data={data} margin={{ top: 0, right: 0, left: 0, bottom: 0 }} stackOffset={this.props.stackOffset}>
                     {
                         this.props.defs === undefined ?
                             <defs>
@@ -87,14 +89,14 @@ export default class StandardAreaChart extends React.Component {
                                     <ReferenceLine isFront={true} ifOverflow={"visible"}
                                                    label={
                                                        <Label
-                                                           position={this.props.stacked ? i === yLineAmount - 1 ?
+                                                           position={this.props.stackOffset === "expand" ? i === yLineAmount - 1 ?
                                                                    "insideTopLeft" : i === 0 ?
                                                                        "insideBottomLeft" : "insideLeft":
                                                                i === yLineAmount - 1 ?
                                                                    "insideBottomLeft" : i === 0 ?
                                                                        "insideTopLeft" : "insideLeft"}
                                                            style={{ fill: "rgb(0,0,0)"}}
-                                                           value={Math.round(y)}/>} y={this.props.stacked ? y / max : y} strokeDasharray="3 3"/>)
+                                                           value={Math.round(y)}/>} y={this.props.stackOffset === "expand" ? y / max : y} strokeDasharray="3 3"/>)
                         })()
                     }
                     <CartesianGrid strokeDasharray="3 3" horizontal={false}/>
