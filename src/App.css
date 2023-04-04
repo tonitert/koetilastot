@@ -29,6 +29,7 @@
   font-size: larger;
   margin-bottom: 10px;
   transition: background-color ease-out 0.3s;
+  cursor: pointer;
 }
 
 .view-switch-buttons {
@@ -69,14 +70,12 @@
   flex-grow: 1;
   aspect-ratio: 2;
   min-height: 300px;
-  max-height: 50vh;
+  max-height: 70vh;
 }
 
-.filter-card {
-  min-height: 100px;
-  padding-left: 20px;
-  padding-right: 20px;
-  padding-bottom: 20px;
+.graph-card > .graph-responsive-container {
+  /* Hacky way to fix the text based on the title's height, feel free to make this better */
+  height: calc(100% - (25px + 10px * 2));
 }
 
 .card > .view-switcher {
@@ -142,11 +141,6 @@
 
 a {
   color: white;
-}
-
-.sort-options {
-  display: flex;
-  flex-wrap: wrap;
 }
 
 @media only screen and (min-width: 600px) {

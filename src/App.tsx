@@ -14,7 +14,7 @@ export default class App extends React.Component {
   private DEFAULT_VIEW = "YO";
 
   private DATA_PARSERS = {
-    "YO": YODataParser.loadData()
+    "YO": new YODataParser()
   }
 
   private views: ViewData[] = [

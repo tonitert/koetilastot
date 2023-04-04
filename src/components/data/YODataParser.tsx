@@ -1,11 +1,13 @@
 export enum Sex {
-    Male,
-    Female
+    Male = "Male",
+    Female = "Female",
+    All = "All"
 }
 
 export enum YOSeason {
-    Spring = "Spring",
-    Autumn = "Autumn"
+    Spring = "spring",
+    Autumn = "autumn",
+    All = "all"
 }
 
 export interface YOCandidate {
@@ -14,7 +16,7 @@ export interface YOCandidate {
     subjects: {
         [key: string]: number
     },
-    school: number
+    schoolNumber: number
 }
 
 export class YODate {
@@ -37,12 +39,36 @@ export class YODate {
 
 export interface YOSeasonData {
     candidates: YOCandidate[]
-    count: number
+    date: YODate
 }
 
-export default class YODataParser {
+export interface School {
+    schoolName: string
+    num: number
+}
 
-    private static readonly YTL_DATA_URL = "/data/ytl/per-student"
+export class YOData {
+    readonly yoSeasons: Map<YODate, YOSeasonData>
+    readonly schools: School[]
+
+    constructor(yoSeasons: Map<YODate, YOSeasonData>, schools: School[]) {
+        this.yoSeasons = yoSeasons;
+        this.schools = schools;
+    }
+}
+
+export class DataUpdatedEvent extends Event {
+    data: YOData
+
+    constructor(data: YOData, eventInitDict?: EventInit) {
+        super("update", eventInitDict);
+        this.data = data;
+    }
+}
+
+export default class YODataParser extends EventTarget {
+
+    private static readonly YTL_DATA_URL = "/data/ytl/per_student"
     private static readonly SUBJECTS = {
         "A":"a",
         "O":"a",
@@ -89,30 +115,68 @@ export default class YODataParser {
         "L7":"a"
     }
 
-    yoSeasons: Map<YODate, YOSeasonData> = new Map<YODate, YOSeasonData>()
+    private _yoData: YOData = null;
 
-    static async loadData(): Promise<YODataParser> {
-        let yoSeasons: Map<YODate, YOSeasonData> = new Map<YODate, YOSeasonData>()
-        let yoDates: YODate[] = (await (await fetch(this.YTL_DATA_URL + "/downloadedDates.json")).json())
-            .map((val) => new YODate(val.year, val.season))
-        for(let yoDate of yoDates) {
+    private updatePromise: Promise<YOData> = null
+
+    private fetchInProgress = false;
+
+    public get yoData(): YOData {
+        return this._yoData;
+    }
+
+    public get dataLoaded(): boolean{
+        return this._yoData !== null;
+    }
+
+    /**
+     * Gets the data, fetching from the internet if not already loaded.
+     */
+    public async getData(): Promise<YOData> {
+        if(this.fetchInProgress) return this.updatePromise;
+        return this.updateData();
+    }
+
+
+    /**
+     * Fetches new data from the internet.
+     */
+    public updateData(): Promise<YOData> {
+        if(this.fetchInProgress)
+            return this.updatePromise;
+        let promise = new Promise<YOData>(async (resolve, reject) => {
+            this.fetchInProgress = true;
             try {
-                yoSeasons.set(yoDate, await (await fetch(`${this.YTL_DATA_URL}/${yoDate.toJsonString()}`)).json());
+                let yoSeasons: Map<YODate, YOSeasonData> = new Map<YODate, YOSeasonData>()
+                let yoDates: YODate[] = (await (await fetch(YODataParser.YTL_DATA_URL + "/downloadedDates.json")).json())
+                    .map((val) => new YODate(val.year, val.season.toLowerCase()))
+                for(let yoDate of yoDates) {
+                    try {
+                        let seasonData: YOSeasonData = await (await fetch(`${YODataParser.YTL_DATA_URL}/${yoDate.toJsonString()}`)).json();
+                        seasonData.date = yoDate;
+                        yoSeasons.set(yoDate, seasonData);
+                    }
+                    catch (e) {
+                        console.warn("Exception while fetching:")
+                        console.warn(e)
+                    }
+                }
+                let schoolsObject = (await (await fetch(YODataParser.YTL_DATA_URL + "/schools.json")).json());
+                yoSeasons = new Map([...yoSeasons.entries()].sort((a,b) => {
+                    let seasonToNum = (d: YODate) => d.season === YOSeason.Autumn ? 1 : 0
+                    return (a[0].year * 2 + seasonToNum(a[0])) - (b[0].year * 2 + seasonToNum(b[0]))
+                }));
+                this._yoData = new YOData(yoSeasons, schoolsObject.schools);
+                this.fetchInProgress = false;
+                this.dispatchEvent(new DataUpdatedEvent(this._yoData));
+                resolve(this._yoData)
             }
-            catch (e) {
-                console.warn("Exception while fetching:")
-                console.warn(e)
+            catch(e) {
+                this.fetchInProgress = false;
+                reject(e);
             }
-        }
-        yoSeasons = new Map([...yoSeasons.entries()].sort((a,b) => {
-            let seasonToNum = (d: YODate) => d.season === YOSeason.Autumn ? 1 : 0
-            return (a[0].year * 2 + seasonToNum(a[0])) - (b[0].year * 2 + seasonToNum(b[0]))
-        }));
-        return new YODataParser(yoSeasons);
+        });
+        this.updatePromise = promise;
+        return promise;
     }
-
-    private constructor(yoSeasons: Map<YODate, YOSeasonData>) {
-        this.yoSeasons = yoSeasons
-    }
-
 }

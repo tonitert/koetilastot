@@ -1,166 +1,127 @@
 import React from 'react';
 import GraphBox from "../../containers/GraphBox";
-import YODataParser, {YOSeason} from "../../data/YODataParser";
-import {GraduationAmountDataPoint} from "./graphs/GraduationAmountDataPoint";
+import YODataParser, {Sex, YOSeasonData} from "../../data/YODataParser";
+import {DateBasedDataPoint} from "./graphs/DateBasedDataPoint";
 import StandardAreaChart from "./graphs/StandardAreaChart";
 import {DataArray} from "./graphs/DataArray";
-import Selector from "../../Selector";
 import {FilterState} from "./filters/FilterState";
+import {FilterCard} from "./filters/FilterCard";
+import {DataFilter} from "./filters/DataFilter";
+import YODateBasedStatistic from "./YODateBasedStatistic";
 
 export default class YO extends React.Component {
 
     props: {
-        yoDataParser: Promise<YODataParser>
+        yoDataParser: YODataParser
     }
 
     state: {
-        yoDataParser: YODataParser
+        dataFilter: DataFilter
         filterState: FilterState
+        yoSeasonData: YOSeasonData[]
     } = {
-        yoDataParser: null,
+        dataFilter: null,
         filterState: {
-            season: "all"
-        }
+            season: "all",
+            selectedSchools: new Set(),
+            sex: Sex.All
+        },
+        yoSeasonData: null
     }
 
     mounted: boolean = false;
 
+    constructor(props) {
+        super(props);
+        this.state.dataFilter = new DataFilter(props.yoDataParser);
+    }
+
     componentDidMount() {
         this.mounted = true;
+        this.props.yoDataParser.addEventListener("update", this.handleDataUpdate.bind(this));
+        this.props.yoDataParser.getData();
     }
 
     componentWillUnmount() {
         this.mounted = false;
+        this.props.yoDataParser.removeEventListener("update", this.handleDataUpdate);
     }
 
+    handleDataUpdate() {
+        this.runDataFilter(this.state.filterState)
+    }
 
-
-    constructor(props) {
-        super(props)
-        this.props = props
-        this.props.yoDataParser.then((parser) => {
-            if(this.mounted){
-                this.setState({
-                    yoDataParser: parser
-                })
-            } else {
-                this.state.yoDataParser = parser
-            }
+    private runDataFilter(filterState: FilterState) {
+        this.setState({
+            yoSeasonData: this.state.dataFilter.filterData(filterState)
         })
     }
 
+    private onFilterUpdate(filterState: FilterState) {
+        let mergedFilterState = {
+            ...this.state.filterState,
+            ...filterState
+        };
+        this.setState({
+            filterState: mergedFilterState
+        });
+        this.runDataFilter(mergedFilterState);
+    }
+
     render() {
-        let graduatesPerYear: GraduationAmountDataPoint[] = []
-        let graduatesSpring: GraduationAmountDataPoint[] = []
-        let graduatesAutumn: GraduationAmountDataPoint[] = []
-        if (this.state.yoDataParser !== null) {
-            let lastVal = 0;
-            for (let entry of this.state.yoDataParser.yoSeasons.entries()) {
-                let point: GraduationAmountDataPoint = new GraduationAmountDataPoint(entry[1].count, entry[0])
-                switch (entry[0].season) {
-                    case YOSeason.Spring:
-                        graduatesSpring.push(point)
-                        lastVal = entry[1].count
-                        break
-                    case YOSeason.Autumn:
-                        graduatesAutumn.push(point)
-                        graduatesPerYear.push(
-                            new GraduationAmountDataPoint(entry[1].count + lastVal, entry[0].year)
-                        )
-                        break
+        let yoStatistics: YODateBasedStatistic[] = []
+        if(this.state.yoSeasonData) {
+            yoStatistics = [
+                {
+                    name: "Valmistuneiden määrä",
+                    yAxisNames: ["Valmistuneita"],
+                    dataPoints: this.state.yoSeasonData.map((seasonData) => new DateBasedDataPoint([seasonData.candidates.length], seasonData.date))
+                },
+                {
+                    name: "Sukupuolijakauma",
+                    yAxisNames: ["Miehet", "Naiset"],
+                    colors: ["url(#mcolor)", "url(#fcolor)"],
+                    display: () => this.state.filterState.sex === Sex.All,
+                    dataPoints: this.state.yoSeasonData.map((seasonData): [YOSeasonData, [number, number]] => {
+                        let male = seasonData.candidates.filter((candidate) => candidate.sex === Sex.Male).length;
+                        let female = seasonData.candidates.length - male;
+                        return [seasonData, [male, female]];
+                    }).map((tuple => new DateBasedDataPoint([tuple[1][0], tuple[1][1]], tuple[0].date))),
+                    stacked: true,
+                    defs:
+                        <defs>
+                            <linearGradient id="fcolor" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#f582ff" stopOpacity={0.5}/>
+                                <stop offset="95%" stopColor="#f582ff" stopOpacity={0.1}/>
+                            </linearGradient>
+                            <linearGradient id="mcolor" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#022CFF" stopOpacity={0.5}/>
+                                <stop offset="95%" stopColor="#022CFF" stopOpacity={0.1}/>
+                            </linearGradient>
+                        </defs>
                 }
-            }
+            ]
         }
 
-        let filterToData = {
-            "all": graduatesPerYear,
-            "spring": graduatesSpring,
-            "autumn": graduatesAutumn
-        }
-        let graduated: GraduationAmountDataPoint[] = filterToData[this.state.filterState.season];
         return (
             <div>
                 <h2 style={{color: "black"}}>Yleiset tilastot</h2>
-                <div className={"card filter-card"}>
-                    <h3>Suodata tietoja</h3>
-                    <div className={"sort-options"}>
-                        <div>
-                            <p>Tutkinnon suoritusajan perusteella:</p>
-                            <Selector targets={[{name: "Koko vuosi", id: "all"}, {name: "Syksy", id: "autumn"}, {name: "Kevät", id: "spring"}]} currentTarget={"all"} onStateChange={(seasonId) => {
-                                this.setState({
-                                    filterState: {
-                                        season: seasonId
-                                    }
-                                })
-                            }}/>
-                        </div>
-                    </div>
-
-                </div>
+                <FilterCard onFilterUpdate={(state) => {
+                    this.onFilterUpdate(state)
+                }} yoDataParser={this.props.yoDataParser}/>
                 <div className="stat-container">
-                    <GraphBox titleText={"Valmistuneiden määrä"} views={[
-                        {
-                            name: "Kaikki",
-                            element: this.state.yoDataParser === null ? null : <StandardAreaChart dataArray={new DataArray(graduated, "Valmistuneita")}/>
+                    {yoStatistics.map((stat) => {
+                            if(stat.display !== undefined && !stat.display()) return null;
+                            return <GraphBox titleText={stat.name} views={[
+                                {
+                                    name: "",
+                                    element: this.state.yoSeasonData === null ? null : <StandardAreaChart dataArray={new DataArray(stat.dataPoints, stat.yAxisNames)} colors={stat.colors} unit={stat.unit} defs={stat.defs} stacked={stat.stacked}/>
 
+                                }
+                            ]} currentView={""}/>
                         }
-                    ]} currentView={"Syksy"}/>
-                    <GraphBox titleText={"Ilmoittautumiset YO-kokeisiin"} views={[
-                        {
-                            name: "Syksy",
-                            element: null
-                        },
-                        {
-                            name: "Kevät",
-                            element: <div/>
-                        },
-                        {
-                            name: "Kaikki",
-                            element: <div/>
-                        }
-                    ]} currentView={"Syksy"}/>
-                    <GraphBox titleText={"Ilmoittautumiset YO-kokeisiin"} views={[
-                        {
-                            name: "Syksy",
-                            element: null
-                        },
-                        {
-                            name: "Kevät",
-                            element: <div/>
-                        },
-                        {
-                            name: "Kaikki",
-                            element: <div/>
-                        }
-                    ]} currentView={"Syksy"}/>
-                    <GraphBox titleText={"Ilmoittautumiset YO-kokeisiin"} views={[
-                        {
-                            name: "Syksy",
-                            element: null
-                        },
-                        {
-                            name: "Kevät",
-                            element: <div/>
-                        },
-                        {
-                            name: "Kaikki",
-                            element: <div/>
-                        }
-                    ]} currentView={"Syksy"}/>
-                    <GraphBox titleText={"Ilmoittautumiset YO-kokeisiin"} views={[
-                        {
-                            name: "Syksy",
-                            element: null
-                        },
-                        {
-                            name: "Kevät",
-                            element: <div/>
-                        },
-                        {
-                            name: "Kaikki",
-                            element: <div/>
-                        }
-                    ]} currentView={"Syksy"}/>
+
+                    )}
                 </div>
             </div>
         );

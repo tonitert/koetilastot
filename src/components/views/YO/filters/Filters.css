@@ -1,0 +1,114 @@
+.sort-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.sort-options > div {
+    padding: 10px 10px 10px 10px;
+    background-color: #efefef;
+    border-radius: 10px;
+}
+
+.filter-card {
+    min-height: 100px;
+    padding-left: 20px;
+    padding-right: 20px;
+    padding-bottom: 20px;
+}
+
+.text-input {
+    border-radius: 10px;
+    border: none;
+    background-color: #cccccc;
+    height: 50px;
+    padding: 5px;
+    box-sizing: border-box;
+    width: 180px;
+}
+
+.text-input:focus {
+    background-color: #b698d9;
+    outline: none;
+    transition: 0.1s ease-in-out;
+}
+
+.filter-search-flex {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.filter-search-flex > .search-bar {
+    width: 180px;
+}
+
+.search-results {
+    display: inline-block;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+    background-color: white;
+    width: 180px;
+}
+
+.selected-results {
+    background-color: white;
+    min-width: 180px;
+    border-radius: 10px;
+    max-height: 206px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+}
+
+.selected-results > * {
+    margin: 10px 5px;
+}
+
+.selected-placeholder {
+    color: dimgray;
+}
+
+.result {
+    all: unset;
+    display: block;
+    width: 100%;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    border-bottom: solid black 2px;
+}
+
+.result:last-child {
+    border-bottom: none;
+}
+
+.search-results > .result, .selected-results > .result {
+    transition: 0.1s;
+    cursor: pointer;
+}
+
+.search-results > .result:hover, .selected-results > .result:hover {
+    background-color: #cccccc;
+}
+
+.result-paragraph-container {
+    margin: 5px;
+}
+
+.result.selected-result > .result-paragraph-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+
+.result-paragraph-container > p {
+    margin-block-start: 0;
+    margin-block-end: 0;
+}
+
+.search-result-close-btn {
+    padding-bottom: 0;
+    padding-top: 0;
+    height: 21px;
+    transform: translateY(10%);
+}
