@@ -14,4 +14,5 @@ export default interface YODateBasedStatistic {
     display?: () => boolean
     stacked?: boolean
     stackOffset?: StackOffsetType
+    legend?: boolean
 }

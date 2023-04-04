@@ -4,7 +4,7 @@ import {
     AreaChart,
     CartesianGrid,
     Dot,
-    Label,
+    Label, Legend,
     ReferenceLine,
     ResponsiveContainer,
     Tooltip,
@@ -14,6 +14,7 @@ import {
 import {DataArray} from "./DataArray";
 import {DefaultTooltipContent} from "recharts/lib/component/DefaultTooltipContent";
 import {StackOffsetType} from "recharts/types/util/types";
+import {DefaultLegendContent} from "recharts/lib/component/DefaultLegendContent";
 
 export default class StandardAreaChart extends React.Component {
 
@@ -24,6 +25,7 @@ export default class StandardAreaChart extends React.Component {
         stacked?: boolean
         defs?: JSX.IntrinsicElements["defs"]
         stackOffset?: StackOffsetType
+        legend?: boolean
     }
 
     render() {
@@ -107,6 +109,12 @@ export default class StandardAreaChart extends React.Component {
                         newProps.separator = " "
                         return <DefaultTooltipContent {...newProps}/>
                     }}/>
+                    {this.props.legend ? <Legend verticalAlign="top" height={36} content={(props) => {
+                        props.payload.map((obj, i) => {
+                            obj.color = this.props.colors[i];
+                        })
+                        return <DefaultLegendContent {...props}/>;
+                    }}/>: null}
                     {
                         this.props.dataArray.yVariableNames.map((val, i) => {
                             let colArr = this.props.colors;

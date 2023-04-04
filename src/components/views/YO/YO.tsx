@@ -115,6 +115,7 @@ export default class YO extends React.Component {
                     ],
                     stacked: true,
                     stackOffset: "expand",
+                    legend: true,
                     dataPoints: this.state.yoSeasonData.map((seasonData):
                     [YOSeasonData, [number, number, number, number, number, number, number]] => {
                         let getAmount = (num: number): number => seasonData.candidates.reduce((p, c) =>
@@ -146,7 +147,13 @@ export default class YO extends React.Component {
                             return <GraphBox titleText={stat.name} views={[
                                 {
                                     name: "",
-                                    element: this.state.yoSeasonData === null ? null : <StandardAreaChart dataArray={new DataArray(stat.dataPoints, stat.yAxisNames)} colors={stat.colors} unit={stat.unit} defs={stat.defs} stacked={stat.stacked} stackOffset={stat.stackOffset}/>
+                                    element: this.state.yoSeasonData === null ? null : <StandardAreaChart dataArray={new DataArray(stat.dataPoints, stat.yAxisNames)}
+                                                                                                          colors={stat.colors}
+                                                                                                          unit={stat.unit}
+                                                                                                          defs={stat.defs}
+                                                                                                          stacked={stat.stacked}
+                                                                                                          stackOffset={stat.stackOffset}
+                                                                                                          legend={stat.legend}/>
 
                                 }
                             ]} currentView={""}/>
