@@ -3,6 +3,12 @@
     "esModuleInterop": true,
     "jsx": "react-jsx",
     "target": "ES2015",
-    "moduleResolution": "node"
+    "moduleResolution": "node",
+    "module": "es2022",
+    "lib": [
+      "es6",
+      "dom",
+      "webworker"
+    ]
   }
 }

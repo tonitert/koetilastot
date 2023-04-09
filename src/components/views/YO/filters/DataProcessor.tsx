@@ -1,13 +1,9 @@
-import YODataParser, {School, Sex, YODate, YOSeason, YOSeasonData} from "../../../data/YODataParser";
+import {School, Sex, YOData, YODate, YOSeason, YOSeasonData, YOSubject} from "../../../data/YODataParser";
 import {FilterState} from "./FilterState";
+import YOStatGenerator from "./YOStatGenerator";
+import {runningInWorker} from "../Utils";
 
-export class DataFilter {
-
-    parser: YODataParser
-
-    constructor(yoDataParser: YODataParser) {
-        this.parser = yoDataParser
-    }
+export class DataProcessor {
 
     private filterBySex(sex: Sex, seasons: YOSeasonData[]): YOSeasonData[] {
         if (sex === Sex.All) return seasons;
@@ -64,9 +60,25 @@ export class DataFilter {
         return seasonsArray;
     }
 
-    filterData(filterState: FilterState) : YOSeasonData[]{
+    private filterBySubject(subjects: Set<YOSubject>, seasonsArray: YOSeasonData[]): YOSeasonData[] {
+        if(subjects.size === 0) return seasonsArray;
+        let subjectStrings = new Set<string>();
+        for (let subject of subjects) {
+            subjectStrings.add(subject.shortName);
+        }
+        for (let seasonData of seasonsArray) {
+            seasonData.candidates = seasonData.candidates.filter((candidate) => {
+                return Object.keys(candidate.subjectPoints).filter(subj => {
+                    return subjectStrings.has(subj)
+                }).length > 0;
+            });
+        }
+        return seasonsArray;
+    }
+
+    filterData(filterState: FilterState, yoData: YOData) : YOSeasonData[]{
         let seasonsArray: YOSeasonData[] = [];
-        for (let season of this.parser.yoData.yoSeasons.values()) {
+        for (let season of yoData.yoSeasons.values()) {
             seasonsArray.push(Object.assign(Object.create(Object.getPrototypeOf(season)), season))
         }
 
@@ -79,7 +91,27 @@ export class DataFilter {
         seasonsArray = this.filterBySex(filterState.sex, seasonsArray);
         seasonsArray = this.filterBySeason(filterState.season as YOSeason, seasonsArray)
         seasonsArray = this.filterBySchool(filterState.selectedSchools, seasonsArray);
+        seasonsArray = this.filterBySubject(filterState.selectedSubjects, seasonsArray);
 
         return seasonsArray;
     }
 }
+
+// Check if running in worker
+// eslint-disable-next-line no-restricted-globals
+
+
+if (runningInWorker()) {
+    let dataFilter = new DataProcessor();
+    let filterState: FilterState;
+    let yoData: YOData;
+    onmessage = (event) => {
+        let data = event.data;
+        if(data.filterState) filterState = data.filterState;
+        if(data.yoData) yoData = data.yoData;
+        if(!filterState || !yoData) return;
+        let filteredData = dataFilter.filterData(filterState, yoData);
+        postMessage(YOStatGenerator.getStats(filteredData, filterState));
+    }
+}
+

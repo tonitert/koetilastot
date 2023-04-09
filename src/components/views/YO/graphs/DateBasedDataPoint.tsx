@@ -12,7 +12,7 @@ export class DateBasedDataPoint implements DataPoint {
         for (let i = 0; i < yValues.length; i++) {
             this[`y${i}`] = yValues[i];
         }
-        if (date instanceof YODate) {
+        if (date instanceof Object) {
             this.x = date.year
         } else {
             this.x = date;

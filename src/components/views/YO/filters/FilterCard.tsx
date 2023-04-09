@@ -1,8 +1,8 @@
 import Selector from "../../../Selector";
 import React from "react";
 import "./Filters.css"
-import YODataParser, {Sex} from "../../../data/YODataParser";
-import {SchoolSearch} from "./SchoolSearch";
+import YODataParser, {School, Sex, YOSubject} from "../../../data/YODataParser";
+import {SearchSelector} from "./SearchSelector";
 import {FilterState} from "./FilterState";
 
 export class FilterCard extends React.Component{
@@ -10,6 +10,29 @@ export class FilterCard extends React.Component{
     props: {
         onFilterUpdate: (filterState: FilterState) => void
         yoDataParser: YODataParser
+    }
+
+    state: {
+        schools: School[]
+        subjects: YOSubject[]
+    } = {
+        schools: null,
+        subjects: null
+    }
+
+    private onUpdateListener() {
+        this.setState({
+            schools: this.props.yoDataParser.yoData.schools,
+            subjects: Object.values(this.props.yoDataParser.yoData.subjects)
+        })
+    }
+
+    componentDidMount() {
+        this.props.yoDataParser.addEventListener("update", this.onUpdateListener.bind(this));
+    }
+
+    componentWillUnmount() {
+        this.props.yoDataParser.removeEventListener("update", this.onUpdateListener);
     }
 
     render() {
@@ -34,15 +57,22 @@ export class FilterCard extends React.Component{
                     </div>
                     <div>
                         <p>Lukio</p>
-                        <SchoolSearch yoDataParser={this.props.yoDataParser} onSelectionChange={(selectedSchools) => {
+                        <SearchSelector values={this.state.schools} placeholder={"Hae lukioita.."} noValuesSelectedMessage={"Ei vielä lukioita valittuna.."} onSelectionChange={(selectedSchools) => {
                           this.props.onFilterUpdate({
-                                selectedSchools: selectedSchools
+                                selectedSchools: selectedSchools as Set<School>
                           })
+                        }}/>
+                    </div>
+                    <div>
+                        <p>Aine</p>
+                        <SearchSelector values={this.state.subjects} placeholder={"Hae aineita.."} noValuesSelectedMessage={"Ei vielä aineita valittuna.."} onSelectionChange={(selectedSubjects) => {
+                            this.props.onFilterUpdate({
+                                selectedSubjects: selectedSubjects as Set<YOSubject>
+                            })
                         }}/>
                     </div>
                 </div>
             }
-
         </div>
     }
 }

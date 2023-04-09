@@ -1,3 +1,5 @@
+import Selectable from "../views/YO/filters/Selectable";
+
 export enum Sex {
     Male = "Male",
     Female = "Female",
@@ -40,18 +42,45 @@ export interface YOSeasonData {
     date: YODate
 }
 
-export interface School {
-    schoolName: string
+export class School implements Selectable {
+    name: string
     num: number
+
+    get searchName(): string {
+        return this.name;
+    }
+
+    constructor(name: string, num: number) {
+        this.name = name;
+        this.num = num;
+    }
+}
+
+export class YOSubject implements Selectable {
+    shortName: string
+    finName: string
+    sweName: string
+
+    get searchName(): string {
+        return this.finName;
+    }
+
+    constructor(shortName: string, finName: string, sweName: string) {
+        this.shortName = shortName;
+        this.finName = finName;
+        this.sweName = sweName;
+    }
 }
 
 export class YOData {
     readonly yoSeasons: Map<YODate, YOSeasonData>
     readonly schools: School[]
+    readonly subjects: Record<string, YOSubject>
 
-    constructor(yoSeasons: Map<YODate, YOSeasonData>, schools: School[]) {
+    constructor(yoSeasons: Map<YODate, YOSeasonData>, schools: School[], subjects: Record<string, YOSubject>) {
         this.yoSeasons = yoSeasons;
         this.schools = schools;
+        this.subjects = subjects;
     }
 }
 
@@ -67,51 +96,6 @@ export class DataUpdatedEvent extends Event {
 export default class YODataParser extends EventTarget {
 
     private static readonly YTL_DATA_URL = "/data/ytl/per_student"
-    private static readonly SUBJECTS = {
-        "A":"a",
-        "O":"a",
-        "Z":"a",
-        "I":"a",
-        "W":"a",
-        "Q":"a",
-        "A5":"a",
-        "O5":"a",
-        "M":"a",
-        "N":"a",
-        "BI":"a",
-        "FF":"a",
-        "FY":"a",
-        "HI":"a",
-        "PS":"a",
-        "UE":"a",
-        "UO":"a",
-        "ET":"a",
-        "GE":"a",
-        "KE":"a",
-        "TE":"a",
-        "YH":"a",
-        "BA":"a",
-        "BB":"a",
-        "CA":"a",
-        "CB":"a",
-        "EA":"a",
-        "FA":"a",
-        "SA":"a",
-        "PA":"a",
-        "VA":"a",
-        "EC":"a",
-        "FC":"a",
-        "SC":"a",
-        "PC":"a",
-        "VC":"a",
-        "DC":"a",
-        "IC":"a",
-        "QC":"a",
-        "GC":"a",
-        "TC":"a",
-        "L1":"a",
-        "L7":"a"
-    }
 
     private _yoData: YOData = null;
 
@@ -159,12 +143,19 @@ export default class YODataParser extends EventTarget {
                         console.warn(e)
                     }
                 }
-                let schoolsObject = (await (await fetch(YODataParser.YTL_DATA_URL + "/schools.json")).json());
+                let subjectEntries: [string, YOSubject][] = Object.entries((await (await fetch(YODataParser.YTL_DATA_URL + "/subjects.json")).json()).subjects);
+                let subjects: Record<string, YOSubject> = {};
+                for (let subjectEntry of subjectEntries) {
+                    subjects[subjectEntry[0]] = new YOSubject(subjectEntry[1].shortName, subjectEntry[1].finName, subjectEntry[1].sweName);
+                }
+
+                let rawSchoolArray = (await (await fetch(YODataParser.YTL_DATA_URL + "/schools.json")).json());
+                let schools = rawSchoolArray.schools.map(rawSchool => new School(rawSchool.name, rawSchool.num));
                 yoSeasons = new Map([...yoSeasons.entries()].sort((a,b) => {
                     let seasonToNum = (d: YODate) => d.season === YOSeason.Autumn ? 1 : 0
                     return (a[0].year * 2 + seasonToNum(a[0])) - (b[0].year * 2 + seasonToNum(b[0]))
                 }));
-                this._yoData = new YOData(yoSeasons, schoolsObject.schools);
+                this._yoData = new YOData(yoSeasons, schools, subjects);
                 this.fetchInProgress = false;
                 this.dispatchEvent(new DataUpdatedEvent(this._yoData));
                 resolve(this._yoData)
