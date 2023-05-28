@@ -143,6 +143,26 @@ a {
   color: white;
 }
 
+.fullscreen-backdrop {
+  position: fixed;
+  width: 100%;
+  height: 100vh;
+  left: 0;
+  top: 0;
+  z-index: 1;
+  background-color: rgba(0, 0, 0, 0.38);
+}
+
+.fullscreen {
+  position: relative;
+  margin: auto;
+  width: 90%;
+  height: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  box-shadow: none;
+}
+
 @media only screen and (min-width: 600px) {
   .intro-text {
     width: 50%;
